@@ -249,7 +249,8 @@ public:
 
     iterator insert(const_iterator it, const T &val) {
         auto *elmt = new Element(val, it.it_ptr->prev, it.it_ptr);
-        it.it_ptr->prev = it.it_ptr->prev->next = elmt;
+        it.it_ptr->prev->next = elmt;
+        it.it_ptr->prev = elmt;
         return iterator(elmt);
     }
 
