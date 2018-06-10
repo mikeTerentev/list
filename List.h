@@ -15,6 +15,8 @@ private:
         Neutral *prev;
         Neutral *next;
 
+        virtual ~Neutral() = default;
+
         Neutral(Neutral *prev, Neutral *next) : prev(prev), next(next) {}
 
         Neutral() : prev(nullptr), next(nullptr) {};
@@ -29,7 +31,7 @@ private:
         }
     }
 
-    struct Element : Neutral {
+    struct Element : virtual Neutral {
         T value;
 
         ~Element() = default;
@@ -37,8 +39,8 @@ private:
         Element(const T &data, Neutral *prev, Neutral *next) : Neutral(prev, next), value(data) {};
     };
 
-    mutable Neutral root;
-    mutable Neutral *root_ptr = &root;
+    Neutral root;
+    Neutral *root_ptr = &root;
 
 public:
     void clear() {
@@ -53,7 +55,7 @@ public:
     }
 
     bool empty() const {
-        return root.prev == root.next;
+        return root_ptr == root.next;
     }
 
     template<typename Z>
@@ -88,7 +90,7 @@ public:
         }
 
         Z &operator*() const {
-            return static_cast<Element *>(it_ptr)->value;
+            return dynamic_cast<Element *>(it_ptr)->value;
         }
 
         //template <typename P>
@@ -144,7 +146,7 @@ public:
     List(const List &other) : List() {
         Neutral *other_elem = other.root.next;
         while (other_elem != other.root_ptr) {
-            push_back(static_cast<Element *>(other_elem)->value);
+            push_back(dynamic_cast<Element *>(other_elem)->value);
             other_elem = other_elem->next;
         }
     }
@@ -176,12 +178,15 @@ public:
     }
 
     void push_back(T const &elem) {
-        root.prev = root.prev->next = new Element(elem, root.prev, root_ptr);
-
+        auto x = new Element(elem, root.prev, root_ptr);
+        root.prev->next = x;
+        root.prev = x;
     }
 
     void push_front(T const &elem) {
-        root.next = root.next->prev = new Element(elem, root_ptr, root.next);
+        auto x = new Element(elem, root_ptr, root.next);
+        root.next->prev = x;
+        root.next = x;
     }
 
     void pop_back() {
