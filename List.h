@@ -119,6 +119,16 @@ public:
 public:
     void friend swap(List<T> &frst, List<T> &sec) noexcept {
         std::swap(frst.root, sec.root);
+        auto f_p = frst.root_ptr->prev;
+        auto f_n = frst.root_ptr->next;
+
+        auto s_p = sec.root_ptr->prev;
+        auto s_n = sec.root_ptr->next;
+
+        frst.root_ptr->prev = s_p;
+        frst.root_ptr->next = s_n;
+        sec.root_ptr->prev = f_p;
+        sec.root_ptr->next = f_n;
     }
 
     T &get_value(Neutral *elmnt) const {
