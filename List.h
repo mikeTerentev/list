@@ -167,11 +167,11 @@ public:
         return *(--end());
     }
 
-    const int &front() const {
+    const T &front() const {
         return *(begin());
     }
 
-    int &front() {
+    T &front() {
         return *(begin());
     }
 
