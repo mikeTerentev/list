@@ -17,7 +17,7 @@ private:
 
         Neutral(Neutral *prev, Neutral *next) : prev(prev), next(next) {}
 
-        Neutral() : next(nullptr), prev(nullptr) {};
+        Neutral() : prev(nullptr), next(nullptr) {};
     };
 
     void free_circle(const Neutral &fake_node) {
@@ -37,8 +37,8 @@ private:
         Element(const T &data, Neutral *prev, Neutral *next) : Neutral(prev, next), value(data) {};
     };
 
-    Neutral root;
-    Neutral *root_ptr = &root;
+    mutable  Neutral root;
+    mutable   Neutral *root_ptr = &root;
 
 public:
     void clear() {
@@ -91,12 +91,12 @@ public:
             return static_cast<Element *>(it_ptr)->value;
         }
 
-        friend bool operator==(const List_iterator &lhs, const List_iterator &rhs) {
-            return lhs.it_ptr == rhs.it_ptr;
+         bool operator==( const List_iterator &rhs) {
+            return it_ptr == rhs.it_ptr;
         }
 
-        friend bool operator!=(const List_iterator &lhs, const List_iterator &rhs) {
-            return lhs.it_ptr != rhs.it_ptr;
+         bool operator!=( const List_iterator &rhs) {
+            return it_ptr != rhs.it_ptr;
         }
 
 //iterator 633:56
@@ -157,11 +157,19 @@ public:
         clear();
     }
 
-    const T &back() {
+    T &back() {
         return *(--end());
     }
 
-    const T &front() {
+    const T &back() const {
+        return *(--end());
+    }
+
+    const int &front() const {
+        return *(begin());
+    }
+
+    int &front() {
         return *(begin());
     }
 

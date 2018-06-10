@@ -9,6 +9,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address,undefined
 #set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 add_executable(testing
+        main.cpp
         testing.cpp
         list.h
         gtest/gtest-all.cc
