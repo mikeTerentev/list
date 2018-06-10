@@ -37,8 +37,8 @@ private:
         Element(const T &data, Neutral *prev, Neutral *next) : Neutral(prev, next), value(data) {};
     };
 
-    mutable  Neutral root;
-    mutable   Neutral *root_ptr = &root;
+    mutable Neutral root;
+    mutable Neutral *root_ptr = &root;
 
 public:
     void clear() {
@@ -91,11 +91,13 @@ public:
             return static_cast<Element *>(it_ptr)->value;
         }
 
-         bool operator==( const List_iterator &rhs) {
+        //template <typename P>
+        bool operator==(const List_iterator &rhs) const {
             return it_ptr == rhs.it_ptr;
         }
 
-         bool operator!=( const List_iterator &rhs) {
+        //template <typename P>
+        bool operator!=(const List_iterator &rhs) const {
             return it_ptr != rhs.it_ptr;
         }
 
