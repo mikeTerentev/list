@@ -147,6 +147,14 @@ public:
         clear();
     }
 
+    const T &back() {
+        return *(--end());
+    }
+
+    const T &front() {
+        return *(begin());
+    }
+
     void push_back(T const &elem) {
         root.prev = root.prev->next = new Element(elem, root.prev, root_ptr);
 
@@ -168,14 +176,6 @@ public:
         root.next->next->prev = root_ptr;
         root.next = root.next->next;
         delete trash;
-    }
-
-    const T &back() {
-        return *(--end());
-    }
-
-    const T &front() {
-        return *(begin());
     }
 
     iterator begin() {
@@ -210,6 +210,18 @@ public:
         return const_reverse_iterator(begin());
     }
 
+    iterator splice(const_iterator pos, List &src_list, const_iterator begin_it, const_iterator end_it) {
+        Neutral *tmp = end_it.it_ptr->prev->next;
+        end_it.it_ptr->prev->next = pos.it_ptr->prev->next;
+        pos.it_ptr->prev->next = begin_it.it_ptr->prev->next;
+        begin_it.it_ptr->prev->next = tmp;
+        tmp = pos.it_ptr->prev;
+        pos.it_ptr->prev = end_it.it_ptr->prev;
+        end_it.it_ptr->prev = begin_it.it_ptr->prev;
+        begin_it.it_ptr->prev = tmp;
+        return iterator(pos.it_ptr);
+    }
+
     iterator insert(const_iterator it, const T &val) {
         auto *elmt = new Element(val, it.it_ptr->prev, it.it_ptr);
         it.it_ptr->prev = it.it_ptr->prev->next = elmt;
@@ -233,18 +245,6 @@ public:
         free_circle(*erasing_root);
         delete erasing_root;
         return iterator(end.it_ptr);
-    }
-
-    iterator splice(const_iterator pos, List &src_list, const_iterator begin_it, const_iterator end_it) {
-        Neutral *tmp = end_it.it_ptr->prev->next;
-        end_it.it_ptr->prev->next = pos.it_ptr->prev->next;
-        pos.it_ptr->prev->next = begin_it.it_ptr->prev->next;
-        begin_it.it_ptr->prev->next = tmp;
-        tmp = pos.it_ptr->prev;
-        pos.it_ptr->prev = end_it.it_ptr->prev;
-        end_it.it_ptr->prev = begin_it.it_ptr->prev;
-        begin_it.it_ptr->prev = tmp;
-        return iterator(pos.it_ptr);
     }
 };
 
