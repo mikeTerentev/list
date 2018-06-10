@@ -1,0 +1,251 @@
+//
+// Created by Михаил Терентьев on 10/06/2018.
+//
+#ifndef LIST_EWF_H
+#define LIST_EWF_H
+
+#include <type_traits>
+#include <iterator>
+#include <iostream>
+
+template<typename T>
+class List {
+private:
+    struct Neutral {
+        Neutral *prev;
+        Neutral *next;
+
+        Neutral(Neutral *prev, Neutral *next) : prev(prev), next(next) {}
+
+        Neutral() : next(nullptr), prev(nullptr) {};
+    };
+
+    void free_circle(const Neutral &fake_node) {
+        Neutral *n = fake_node.next->next, *cur = fake_node.next;
+        while (cur != &fake_node) {
+            delete cur;
+            cur = n;
+            n = n->next;
+        }
+    }
+
+    struct Element : Neutral {
+        T value;
+
+        ~Element() = default;
+
+        Element(const T &data, Neutral *prev, Neutral *next) : Neutral(prev, next), value(data) {};
+    };
+
+    Neutral root;
+    Neutral *root_ptr = &root;
+
+public:
+    void clear() {
+        Neutral *cur = root_ptr->next;
+        while (cur != root_ptr) {
+            Neutral *to_del = cur;
+            cur = cur->next;
+            delete to_del;
+        }
+        root_ptr->next = root_ptr;
+        root_ptr->prev = root_ptr;
+    }
+
+    bool empty() const {
+        return root.prev == root.next;
+    }
+
+    template<typename Z>
+    struct List_iterator : public std::iterator<std::bidirectional_iterator_tag, Z> {
+        friend class List<T>;
+
+        List_iterator &operator++() {
+            it_ptr = it_ptr->next;
+            return *this;
+        }
+
+        template<typename C>
+        List_iterator(const List_iterator<C> &other)
+                : it_ptr(other.it_ptr) {
+        }
+
+        List_iterator &operator--() {
+            it_ptr = it_ptr->prev;
+            return *this;
+        }
+
+        List_iterator operator++(int) {
+            List_iterator tmp(it_ptr);
+            ++(*this);
+            return tmp;
+        }
+
+        List_iterator operator--(int) {
+            List_iterator tmp(it_ptr);
+            --(*this);
+            return tmp;
+        }
+
+        Z &operator*() const {
+            return static_cast<Element *>(it_ptr)->value;
+        }
+
+        friend bool operator==(const List_iterator &lhs, const List_iterator &rhs) {
+            return lhs.it_ptr == rhs.it_ptr;
+        }
+
+        friend bool operator!=(const List_iterator &lhs, const List_iterator &rhs) {
+            return lhs.it_ptr != rhs.it_ptr;
+        }
+
+//iterator 633:56
+        typedef std::ptrdiff_t difference_type;
+        typedef Z value_type;
+        typedef Z *pointer;
+        typedef Z &reference;
+        typedef std::bidirectional_iterator_tag iterator_category;
+
+    private:
+        explicit List_iterator(Neutral *cur) : it_ptr(cur) {};
+        Neutral *it_ptr;
+    };
+
+    typedef List_iterator<T> iterator;
+    typedef List_iterator<const T> const_iterator;
+    typedef std::reverse_iterator<iterator> reverse_iterator;
+    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+
+public:
+    void friend swap(List<T> &frst, List<T> &sec) noexcept {
+        std::swap(frst.root, sec.root);
+    }
+
+    T &get_value(Neutral *elmnt) const {
+        return static_cast<Element *>(elmnt)->value;
+    }
+
+    List() {
+        root.prev = root.next = root_ptr;
+    };
+
+    List(const List &other) : List() {
+        Neutral *other_elem = other.root.next;
+        while (other_elem != other.root_ptr) {
+            push_back(static_cast<Element *>(other_elem)->value);
+            other_elem = other_elem->next;
+        }
+    }
+
+    List &operator=(const List &other) {
+        List tmp(other);
+        swap(*this, tmp);
+        return *this;
+    }
+
+    ~List() {
+        clear();
+    }
+
+    void push_back(T const &elem) {
+        root.prev = root.prev->next = new Element(elem, root.prev, root_ptr);
+
+    }
+
+    void push_front(T const &elem) {
+        root.next = root.next->prev = new Element(elem, root_ptr, root.next);
+    }
+
+    void pop_back() {
+        Neutral *trash = root.prev;
+        root.prev->prev->next = root_ptr;
+        root.prev = root.prev->prev;
+        delete trash;
+    }
+
+    void pop_front() {
+        Neutral *trash = root.next;
+        root.next->next->prev = root_ptr;
+        root.next = root.next->next;
+        delete trash;
+    }
+
+    const T &back() {
+        return *(--end());
+    }
+
+    const T &front() {
+        return *(begin());
+    }
+
+    iterator begin() {
+        return iterator(root.next);
+    }
+
+    const_iterator begin() const {
+        return const_iterator(root.next);
+    }
+
+    reverse_iterator rbegin() {
+        return reverse_iterator(end());
+    }
+
+    const_reverse_iterator rbegin() const {
+        return const_reverse_iterator(end());
+    }
+
+    iterator end() {
+        return iterator(root_ptr);
+    }
+
+    const_iterator end() const {
+        return const_iterator(root_ptr);
+    }
+
+    reverse_iterator rend() {
+        return reverse_iterator(begin());
+    }
+
+    const_reverse_iterator rend() const {
+        return const_reverse_iterator(begin());
+    }
+
+    iterator insert(const_iterator it, const T &val) {
+        auto *elmt = new Element(val, it.it_ptr->prev, it.it_ptr);
+        it.it_ptr->prev = it.it_ptr->prev->next = elmt;
+        return iterator(elmt);
+    }
+
+    iterator erase(const_iterator it) {
+        iterator res = iterator(it.it_ptr->next);
+        it.it_ptr->prev->next = it.it_ptr->next;
+        it.it_ptr->next->prev = it.it_ptr->prev;
+        delete it.it_ptr;
+        return res;
+    }
+
+    iterator erase(const_iterator begin, const_iterator end) {
+        auto erasing_root = new Neutral(end.it_ptr->prev, begin.it_ptr);
+        begin.it_ptr->prev->next = end.it_ptr;
+        end.it_ptr->prev->next = erasing_root;
+        end.it_ptr->prev = begin.it_ptr->prev;
+        begin.it_ptr->prev = erasing_root;
+        free_circle(*erasing_root);
+        delete erasing_root;
+        return iterator(end.it_ptr);
+    }
+
+    iterator splice(const_iterator pos, List &src_list, const_iterator begin_it, const_iterator end_it) {
+        Neutral *tmp = end_it.it_ptr->prev->next;
+        end_it.it_ptr->prev->next = pos.it_ptr->prev->next;
+        pos.it_ptr->prev->next = begin_it.it_ptr->prev->next;
+        begin_it.it_ptr->prev->next = tmp;
+        tmp = pos.it_ptr->prev;
+        pos.it_ptr->prev = end_it.it_ptr->prev;
+        end_it.it_ptr->prev = begin_it.it_ptr->prev;
+        begin_it.it_ptr->prev = tmp;
+        return iterator(pos.it_ptr);
+    }
+};
+
+#endif //LIST_EWF_H
